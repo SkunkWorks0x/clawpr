@@ -6,3 +6,4 @@ dist
 coverage
 *.pem
 *.key
+node_modules/

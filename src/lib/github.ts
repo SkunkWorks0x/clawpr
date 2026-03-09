@@ -46,6 +46,12 @@ export function fetchIssues(
   } catch (err) {
     const msg =
       err instanceof Error ? err.message : "Failed to fetch from GitHub API";
+    if (msg.includes("ENOBUFS") || msg.includes("maxBuffer")) {
+      console.error(
+        `Error: GitHub API response too large for ${owner}/${repo} issues. Try narrowing with --limit or --label.`
+      );
+      process.exit(1);
+    }
     if (msg.includes("Not Found") || msg.includes("404")) {
       console.error(
         `Error: Repository ${owner}/${repo} not found or not accessible`
@@ -79,6 +85,12 @@ export function fetchPullRequests(
   } catch (err) {
     const msg =
       err instanceof Error ? err.message : "Failed to fetch from GitHub API";
+    if (msg.includes("ENOBUFS") || msg.includes("maxBuffer")) {
+      console.error(
+        `Error: GitHub API response too large for ${owner}/${repo} pulls. Try narrowing with --limit or --label.`
+      );
+      process.exit(1);
+    }
     if (msg.includes("Not Found") || msg.includes("404")) {
       console.error(
         `Error: Repository ${owner}/${repo} not found or not accessible`
