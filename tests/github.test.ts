@@ -30,7 +30,7 @@ describe("github module", () => {
       return "";
     });
 
-    const result = fetchIssues("test", "repo");
+    const result = fetchIssues("test", "repo", 10);
     assert.equal(result.length, 5);
     assert.equal(result[0]!.number, 1);
     assert.equal(result[0]!.title, "Typo in README");
@@ -48,7 +48,7 @@ describe("github module", () => {
       return "";
     });
 
-    fetchIssues("test", "repo", "bug");
+    fetchIssues("test", "repo", 10, "bug");
     assert.ok(capturedCmd.includes("labels=bug"));
   });
 
@@ -65,7 +65,7 @@ describe("github module", () => {
     }) as never;
 
     try {
-      fetchIssues("bad", "repo");
+      fetchIssues("bad", "repo", 10);
     } catch {
       // expected
     }

@@ -4,6 +4,11 @@ import type { GHIssue, GHPullRequest } from "./types.js";
 // Re-export for test convenience
 export { setExecFn, resetExecFn } from "./exec.js";
 
+const GH_EXEC_OPTS = {
+  timeout: 30000,
+  stdio: ["pipe", "pipe", "pipe"] as const,
+};
+
 export function checkGhInstalled(): void {
   try {
     exec("gh --version", { stdio: "pipe" });
@@ -24,81 +29,80 @@ export function checkGhAuth(): void {
   }
 }
 
+function handleGhError(err: unknown, owner: string, repo: string, resource: string): never {
+  const msg =
+    err instanceof Error ? err.message : "Failed to fetch from GitHub API";
+  if (msg.includes("ENOBUFS") || msg.includes("maxBuffer")) {
+    console.error(
+      `Error: GitHub API response too large for ${owner}/${repo} ${resource}. Try a smaller --limit or --label.`
+    );
+    process.exit(1);
+  }
+  if (msg.includes("ETIMEDOUT") || msg.includes("timed out")) {
+    console.error(
+      `Error: GitHub API request timed out for ${owner}/${repo} ${resource}. Try a smaller --limit or --label.`
+    );
+    process.exit(1);
+  }
+  if (msg.includes("Not Found") || msg.includes("404")) {
+    console.error(
+      `Error: Repository ${owner}/${repo} not found or not accessible`
+    );
+    process.exit(1);
+  }
+  console.error(`Error: Failed to fetch from GitHub API\n${msg}`);
+  process.exit(1);
+}
+
 export function fetchIssues(
   owner: string,
   repo: string,
+  limit: number,
   label?: string
 ): GHIssue[] {
   try {
     const jqFilter = `.[] | {number, title, labels: [.labels[].name], state, created_at, body}`;
-    let cmd = `gh api "repos/${owner}/${repo}/issues" --paginate -q '${jqFilter}'`;
-    if (label) {
-      cmd = `gh api "repos/${owner}/${repo}/issues?labels=${encodeURIComponent(label)}" --paginate -q '${jqFilter}'`;
-    }
-    const raw = exec(cmd, {
-      timeout: 30000,
-      stdio: ["pipe", "pipe", "pipe"],
+    const params = new URLSearchParams({
+      state: "open",
+      per_page: String(Math.min(limit, 100)),
     });
+    if (label) {
+      params.set("labels", label);
+    }
+    const cmd = `gh api "repos/${owner}/${repo}/issues?${params.toString()}" -q '${jqFilter}'`;
+    const raw = exec(cmd, GH_EXEC_OPTS);
     if (!raw.trim()) return [];
     const lines = raw.trim().split("\n");
     const jsonStr = "[" + lines.join(",") + "]";
     return JSON.parse(jsonStr) as GHIssue[];
   } catch (err) {
-    const msg =
-      err instanceof Error ? err.message : "Failed to fetch from GitHub API";
-    if (msg.includes("ENOBUFS") || msg.includes("maxBuffer")) {
-      console.error(
-        `Error: GitHub API response too large for ${owner}/${repo} issues. Try narrowing with --limit or --label.`
-      );
-      process.exit(1);
-    }
-    if (msg.includes("Not Found") || msg.includes("404")) {
-      console.error(
-        `Error: Repository ${owner}/${repo} not found or not accessible`
-      );
-      process.exit(1);
-    }
-    console.error(`Error: Failed to fetch from GitHub API\n${msg}`);
-    process.exit(1);
+    handleGhError(err, owner, repo, "issues");
   }
 }
 
 export function fetchPullRequests(
   owner: string,
   repo: string,
+  limit: number,
   label?: string
 ): GHPullRequest[] {
   try {
     const jqFilter = `.[] | {number, title, labels: [.labels[].name], state, created_at, body, diff_url}`;
-    let cmd = `gh api "repos/${owner}/${repo}/pulls" --paginate -q '${jqFilter}'`;
-    if (label) {
-      cmd = `gh api "repos/${owner}/${repo}/pulls?labels=${encodeURIComponent(label)}" --paginate -q '${jqFilter}'`;
-    }
-    const raw = exec(cmd, {
-      timeout: 30000,
-      stdio: ["pipe", "pipe", "pipe"],
+    const params = new URLSearchParams({
+      state: "open",
+      per_page: String(Math.min(limit, 100)),
     });
+    if (label) {
+      params.set("labels", label);
+    }
+    const cmd = `gh api "repos/${owner}/${repo}/pulls?${params.toString()}" -q '${jqFilter}'`;
+    const raw = exec(cmd, GH_EXEC_OPTS);
     if (!raw.trim()) return [];
     const lines = raw.trim().split("\n");
     const jsonStr = "[" + lines.join(",") + "]";
     return JSON.parse(jsonStr) as GHPullRequest[];
   } catch (err) {
-    const msg =
-      err instanceof Error ? err.message : "Failed to fetch from GitHub API";
-    if (msg.includes("ENOBUFS") || msg.includes("maxBuffer")) {
-      console.error(
-        `Error: GitHub API response too large for ${owner}/${repo} pulls. Try narrowing with --limit or --label.`
-      );
-      process.exit(1);
-    }
-    if (msg.includes("Not Found") || msg.includes("404")) {
-      console.error(
-        `Error: Repository ${owner}/${repo} not found or not accessible`
-      );
-      process.exit(1);
-    }
-    console.error(`Error: Failed to fetch from GitHub API\n${msg}`);
-    process.exit(1);
+    handleGhError(err, owner, repo, "pulls");
   }
 }
 
@@ -112,10 +116,7 @@ export function createPR(
   try {
     const result = exec(
       `gh pr create --repo "${owner}/${repo}" --head "${branch}" --title "${title.replace(/"/g, '\\"')}" --body "${body.replace(/"/g, '\\"')}"`,
-      {
-        timeout: 30000,
-        stdio: ["pipe", "pipe", "pipe"],
-      }
+      GH_EXEC_OPTS
     );
     return result.trim();
   } catch (err) {

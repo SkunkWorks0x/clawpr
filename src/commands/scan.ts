@@ -36,7 +36,7 @@ export function scanCommand(repoArg: string, options: ScanOptions): void {
   let totalOpen = 0;
 
   if (options.type === "issue" || options.type === "all") {
-    const issues = fetchIssues(owner, repo, options.label);
+    const issues = fetchIssues(owner, repo, limit, options.label);
     totalOpen += issues.length;
     for (const issue of issues) {
       items.push({
@@ -52,7 +52,7 @@ export function scanCommand(repoArg: string, options: ScanOptions): void {
   }
 
   if (options.type === "pr" || options.type === "all") {
-    const prs = fetchPullRequests(owner, repo, options.label);
+    const prs = fetchPullRequests(owner, repo, limit, options.label);
     totalOpen += prs.length;
     for (const pr of prs) {
       items.push({
