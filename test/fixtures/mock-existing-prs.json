@@ -1,0 +1,52 @@
+[
+  {
+    "number": 50,
+    "title": "Fix auth bypass vulnerability in login",
+    "body": "Addresses the authentication bypass issue by validating tokens before session creation.",
+    "labels": ["security", "bug"],
+    "type": "pr",
+    "url": "https://github.com/test-org/test-repo/pull/50",
+    "createdAt": "2026-03-07T10:00:00Z",
+    "changedFiles": ["src/auth/login.ts", "src/auth/session.ts", "test/auth.test.ts"]
+  },
+  {
+    "number": 48,
+    "title": "Add WebSocket connection handler",
+    "body": "Initial WebSocket support for real-time features.",
+    "labels": ["feature"],
+    "type": "pr",
+    "url": "https://github.com/test-org/test-repo/pull/48",
+    "createdAt": "2026-03-06T14:00:00Z",
+    "changedFiles": ["src/ws/handler.ts", "src/ws/types.ts"]
+  },
+  {
+    "number": 45,
+    "title": "Improve error handling in API routes",
+    "body": "Standardize error responses across all API endpoints.",
+    "labels": ["improvement"],
+    "type": "pr",
+    "url": "https://github.com/test-org/test-repo/pull/45",
+    "createdAt": "2026-03-05T09:00:00Z",
+    "changedFiles": ["src/routes/api.ts", "src/middleware/error.ts"]
+  },
+  {
+    "number": 40,
+    "title": "Update dependencies to latest versions",
+    "body": "Bump all packages to address security advisories.",
+    "labels": ["deps"],
+    "type": "pr",
+    "url": "https://github.com/test-org/test-repo/pull/40",
+    "createdAt": "2026-03-04T16:00:00Z",
+    "changedFiles": ["package.json", "package-lock.json"]
+  },
+  {
+    "number": 38,
+    "title": "Refactor database connection pool",
+    "body": "Move to connection pooling for better performance under load.",
+    "labels": ["refactor"],
+    "type": "pr",
+    "url": "https://github.com/test-org/test-repo/pull/38",
+    "createdAt": "2026-03-03T11:00:00Z",
+    "changedFiles": ["src/db/pool.ts", "src/db/connection.ts", "src/config.ts"]
+  }
+]

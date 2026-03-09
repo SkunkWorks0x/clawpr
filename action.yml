@@ -1,0 +1,40 @@
+name: 'ClawPR'
+description: 'Rule-based PR reviewer — summaries, duplicate detection, security scanning, vision alignment'
+author: 'SkunkWorks0x'
+branding:
+  icon: 'shield'
+  color: 'orange'
+
+inputs:
+  github-token:
+    description: 'GitHub token for API access'
+    required: true
+    default: '${{ github.token }}'
+  duplicate-threshold:
+    description: 'Minimum similarity score to flag duplicates (0.0-1.0)'
+    required: false
+    default: '0.4'
+  security-fail-threshold:
+    description: 'Security score below which the review fails (0-100)'
+    required: false
+    default: '50'
+  max-diff-bytes:
+    description: 'Maximum diff size in bytes before truncation'
+    required: false
+    default: '102400'
+  github-api-url:
+    description: 'GitHub API base URL (for GitHub Enterprise)'
+    required: false
+    default: 'https://api.github.com'
+
+outputs:
+  verdict:
+    description: 'Overall review verdict: pass, warn, or fail'
+  security-score:
+    description: 'Security scan score (0-100)'
+  vision-score:
+    description: 'Vision alignment score (0-100)'
+
+runs:
+  using: 'node20'
+  main: 'dist/action.js'

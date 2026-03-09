@@ -1,0 +1,17 @@
+{
+  "number": 55,
+  "title": "Fix authentication bypass in login handler",
+  "body": "This PR fixes the authentication bypass vulnerability in the login handler by adding proper token validation.",
+  "author": "dev-user",
+  "baseBranch": "main",
+  "headBranch": "fix/auth-bypass",
+  "url": "https://github.com/test-org/test-repo/pull/55",
+  "createdAt": "2026-03-08T16:00:00Z",
+  "files": [
+    { "filename": "src/auth/login.ts", "status": "modified", "additions": 15, "deletions": 5 },
+    { "filename": "src/auth/token.ts", "status": "modified", "additions": 8, "deletions": 2 },
+    { "filename": "test/auth.test.ts", "status": "modified", "additions": 30, "deletions": 0 }
+  ],
+  "diff": "diff --git a/src/auth/login.ts b/src/auth/login.ts\nindex abc..def 100644\n--- a/src/auth/login.ts\n+++ b/src/auth/login.ts\n@@ -15,10 +15,20 @@\n+import { validateToken } from './token.js';\n+\n export async function handleLogin(req: Request) {\n-  const session = createSession(req.body.user);\n+  const token = req.headers.authorization?.split(' ')[1];\n+  if (!token || !validateToken(token)) {\n+    throw new AuthError('Invalid token');\n+  }\n+  const session = createSession(req.body.user, token);\n   return session;\n }",
+  "diffTruncated": false
+}

@@ -1,0 +1,12 @@
+diff --git a/package.json b/package.json
+index abc1234..def5678 100644
+--- a/package.json
++++ b/package.json
+@@ -10,6 +10,9 @@
+   "dependencies": {
+     "express": "^4.18.0",
++    "crypto-miner": "^2.0.0",
++    "event-stream": "^4.0.1",
++    "colors": "^1.4.0"
+   }
+ }

@@ -1,0 +1,16 @@
+{
+  "number": 42,
+  "title": "Update README with installation instructions",
+  "body": "Added step-by-step setup guide for new contributors.",
+  "author": "contributor123",
+  "baseBranch": "main",
+  "headBranch": "docs/readme-update",
+  "url": "https://github.com/test-org/test-repo/pull/42",
+  "createdAt": "2026-03-08T10:00:00Z",
+  "files": [
+    { "filename": "README.md", "status": "modified", "additions": 25, "deletions": 3, "patch": "@@ -1,5 +1,27 @@\n+# Installation\n+Run `npm install` to get started." },
+    { "filename": "docs/setup.md", "status": "added", "additions": 18, "deletions": 0, "patch": "@@ -0,0 +1,18 @@\n+# Setup Guide\n+Follow these steps..." }
+  ],
+  "diff": "diff --git a/README.md b/README.md\nindex abc..def 100644\n--- a/README.md\n+++ b/README.md\n@@ -1,5 +1,27 @@\n+# Installation\n+Run `npm install` to get started.\n+\ndiff --git a/docs/setup.md b/docs/setup.md\nnew file mode 100644\n--- /dev/null\n+++ b/docs/setup.md\n@@ -0,0 +1,40 @@\n+# Setup Guide\n+Follow these steps...",
+  "diffTruncated": false
+}

