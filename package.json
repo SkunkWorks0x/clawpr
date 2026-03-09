@@ -1,33 +1,27 @@
 {
   "name": "clawpr",
-  "version": "0.1.0",
-  "description": "Rule-based PR reviewer — summaries, duplicate detection, security scanning, vision alignment",
+  "version": "1.0.0",
+  "description": "GitHub repo janitor for the OpenClaw ecosystem. Scan issues, submit clean PRs, integrate security.",
   "author": "SkunkWorks0x",
   "license": "MIT",
   "type": "module",
-  "main": "dist/index.js",
   "bin": {
-    "clawpr": "dist/index.js"
+    "clawpr": "./dist/cli.js"
   },
   "scripts": {
     "build": "tsc",
-    "postbuild": "node -e \"const fs=require('fs'); ['dist/index.js','dist/action.js'].forEach(f=>{try{const c=fs.readFileSync(f,'utf8');if(!c.startsWith('#!'))fs.writeFileSync(f,'#!/usr/bin/env node\\n'+c)}catch(e){}})\"",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "lint": "tsc --noEmit",
-    "review": "tsx src/index.ts review"
-  },
-  "dependencies": {
-    "@octokit/rest": "^21.0.0"
-  },
-  "devDependencies": {
-    "@octokit/webhooks-types": "^7.0.0",
-    "@types/node": "^20.0.0",
-    "typescript": "^5.4.0",
-    "tsx": "^4.0.0",
-    "vitest": "^2.0.0"
+    "test": "npx tsx --test tests/*.test.ts",
+    "start": "node dist/cli.js"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
+  },
+  "dependencies": {
+    "commander": "^12.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "tsx": "^4.0.0",
+    "@types/node": "^22.0.0"
   }
 }

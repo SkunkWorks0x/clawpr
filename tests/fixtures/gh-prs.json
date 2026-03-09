@@ -1,0 +1,29 @@
+[
+  {
+    "number": 2,
+    "title": "Fix whitespace formatting in CLI output",
+    "labels": ["style"],
+    "state": "open",
+    "created_at": "2026-01-16T08:00:00Z",
+    "body": "Fixes inconsistent whitespace and formatting in terminal output",
+    "diff_url": "https://github.com/openclaw/openclaw/pull/2.diff"
+  },
+  {
+    "number": 10,
+    "title": "Add token refresh on expiry",
+    "labels": ["feature"],
+    "state": "open",
+    "created_at": "2026-01-25T12:00:00Z",
+    "body": "Implements automatic token refresh when the current token expires",
+    "diff_url": "https://github.com/openclaw/openclaw/pull/10.diff"
+  },
+  {
+    "number": 15,
+    "title": "Patch CVE-2026-1234 in token handler",
+    "labels": ["security", "vulnerability"],
+    "state": "open",
+    "created_at": "2026-02-05T15:00:00Z",
+    "body": "Fixes a critical vulnerability in the token validation handler",
+    "diff_url": "https://github.com/openclaw/openclaw/pull/15.diff"
+  }
+]

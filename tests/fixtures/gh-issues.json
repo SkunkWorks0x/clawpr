@@ -1,0 +1,42 @@
+[
+  {
+    "number": 1,
+    "title": "Typo in README",
+    "labels": ["documentation"],
+    "state": "open",
+    "created_at": "2026-01-15T10:00:00Z",
+    "body": "There is a typo in the getting started section"
+  },
+  {
+    "number": 5,
+    "title": "Fix null pointer in auth handler",
+    "labels": ["bug"],
+    "state": "open",
+    "created_at": "2026-01-20T14:30:00Z",
+    "body": "Auth handler crashes when token is empty. Need to fix this error."
+  },
+  {
+    "number": 12,
+    "title": "Rewrite plugin architecture",
+    "labels": ["enhancement"],
+    "state": "open",
+    "created_at": "2026-02-01T09:00:00Z",
+    "body": "The current plugin system is too rigid and needs a full rewrite"
+  },
+  {
+    "number": 18,
+    "title": "Hardcoded credentials in config",
+    "labels": ["security", "bug"],
+    "state": "open",
+    "created_at": "2026-02-10T11:00:00Z",
+    "body": "API keys are hardcoded in the default configuration file"
+  },
+  {
+    "number": 23,
+    "title": "Update dependencies to latest",
+    "labels": ["maintenance"],
+    "state": "open",
+    "created_at": "2026-02-15T16:00:00Z",
+    "body": "Several dependencies need an update to their latest versions"
+  }
+]

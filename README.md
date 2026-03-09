@@ -1,90 +1,77 @@
-# 🔍 ClawPR
+# ClawPR
 
-**Rule-based PR reviewer for the OpenClaw ecosystem**
+GitHub repo janitor for the OpenClaw ecosystem
 
-ClawPR automatically reviews pull requests with zero LLM calls — all analysis runs locally using pattern matching, TF-IDF similarity, and configurable heuristics.
-
-## Features
-
-- **PR Summaries** — Scope classification, file categorization, and plain-English descriptions
-- **Duplicate Detection** — TF-IDF + Jaccard similarity against open PRs and issues with file overlap bonuses
-- **Security Scanning** — 20+ regex-based rules detecting credentials, dangerous patterns, and suspicious dependencies (Sentinel-style)
-- **Vision Alignment** — Scores PRs against your project's VISION.md or README.md for governance alignment
-
-## Quick Start — GitHub Action
-
-Add this workflow to your repository at `.github/workflows/clawpr.yml`:
-
-```yaml
-name: ClawPR Review
-
-on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-
-permissions:
-  contents: read
-  pull-requests: write
-  issues: read
-
-jobs:
-  review:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Run ClawPR
-        uses: SkunkWorks0x/clawpr@main
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-```
-
-## Quick Start — CLI
+## Install
 
 ```bash
-npx clawpr review --owner <owner> --repo <repo> --pr <number> --token <token>
+npm install -g clawpr
 ```
 
-## Configuration
+## Quick Start
 
-| Option | CLI Flag | Action Input | Default | Description |
-|--------|----------|-------------|---------|-------------|
-| GitHub Token | `--token` | `github-token` | — | GitHub PAT (or `GITHUB_TOKEN` env var) |
-| Owner | `--owner` | auto-detected | — | Repository owner |
-| Repo | `--repo` | auto-detected | — | Repository name |
-| PR Number | `--pr` | auto-detected | — | Pull request number |
-| Post Comment | `--post-comment` | always true | `false` | Post results as PR comment |
-| Dry Run | `--dry-run` | — | `false` | Run analysis without posting |
-| Duplicate Threshold | `--threshold` | `duplicate-threshold` | `0.4` | Minimum similarity score (0.0-1.0) |
-| Security Fail Threshold | `--security-fail-threshold` | `security-fail-threshold` | `50` | Score below which review fails (0-100) |
-| Max Diff Size | `--max-diff` | `max-diff-bytes` | `102400` | Max diff size in bytes |
-| API URL | `--github-api-url` | `github-api-url` | `https://api.github.com` | GitHub Enterprise API URL |
+```bash
+clawpr scan openclaw/openclaw
+clawpr scan openclaw/openclaw --json
+clawpr pr openclaw/openclaw --branch fix/typos --dry-run
+```
 
-## Scoring
+## Commands
 
-### Security Score (0-100)
-Starts at 100. Deductions: -20 per critical finding, -10 per warning, -2 per info. Score below `security-fail-threshold` triggers a fail verdict.
+### `clawpr scan <owner/repo>`
 
-### Vision Alignment (0-100)
-Based on TF-IDF similarity between your VISION.md/README.md and the PR's intent. Bonuses for test coverage (+10) and vision keyword references (+10). Penalties for doc-only changes without descriptions.
+Fetch open issues and PRs, classify effort, run sentinel if available, output a ranked table.
 
-### Duplicate Detection
-Combined similarity using 60% TF-IDF cosine + 40% Jaccard on tokenized text. File overlap above 30% adds a +0.15 bonus. Matches above the threshold (default 0.4) are flagged.
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--limit <n>` | number | 10 | Max items to fetch |
+| `--type <t>` | `issue`, `pr`, `all` | `all` | Filter item type |
+| `--label <l>` | string | none | Filter by GitHub label |
+| `--json` | boolean | false | Output JSON instead of table |
 
-### Verdict
-- **PASS** (exit 0) — No issues found
-- **WARN** (exit 1) — Warnings present, duplicates found, or low vision score
-- **FAIL** (exit 2) — Critical security findings, security score below threshold, or vision score below 30
+**Examples:**
 
-## Integration with ClawStack Sentinel
+```bash
+clawpr scan openclaw/openclaw --limit 20 --type issue
+clawpr scan openclaw/openclaw --label bug --json
+```
 
-ClawPR uses the same security pattern matching approach as [ClawStack Sentinel](https://github.com/SkunkWorks0x/clawstack-sentinel), applied to PR diffs. The security scanner rules are compatible and can be extended.
+### `clawpr pr <owner/repo> --branch <branch>`
 
-## Design
+Generate and submit a PR with auto-formatted body including a Sentinel security badge.
 
-ClawPR is 100% rule-based — no LLM calls, no external AI APIs. All analysis runs locally using pattern matching, TF-IDF similarity, and configurable heuristics.
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--branch <b>` | string | required | Branch name with commits |
+| `--title <t>` | string | `ClawPR: Fixes for {repo}` | PR title |
+| `--dry-run` | boolean | false | Preview PR without creating |
+| `--body-template <p>` | string | none | Path to custom markdown template |
 
----
+**Examples:**
 
-Part of the [ClawStack](https://github.com/SkunkWorks0x/clawstack) ecosystem | [clawpilled.me](https://clawpilled.me)
+```bash
+clawpr pr openclaw/openclaw --branch fix/typos --dry-run
+clawpr pr openclaw/openclaw --branch fix/typos --title "Fix typos in docs"
+```
+
+## Sentinel Integration
+
+ClawPR optionally integrates with [ClawStack Sentinel](https://github.com/SkunkWorks0x/clawstack-sentinel) for security scanning. If Sentinel is installed (`npx clawstack-sentinel`), ClawPR will:
+
+- Run a security scan on the target repo during `clawpr scan`
+- Display a Sentinel score and finding counts in the output table
+- Include a security badge and finding summary in PRs created with `clawpr pr`
+
+If Sentinel is not available, ClawPR continues without security data.
+
+## Part of ClawStack
+
+ClawPR is part of the ClawStack security-focused product suite for the OpenClaw AI agent ecosystem:
+
+- [ClawStack Sentinel](https://github.com/SkunkWorks0x/clawstack-sentinel) — Security scanner for OpenClaw agent workspaces
+- [TotalReclaw](https://github.com/SkunkWorks0x/totalreclaw) — Agent activity monitor
+- [ClawPilled.me](https://clawpilled.me) — Community hub
+
+## License
+
+MIT
