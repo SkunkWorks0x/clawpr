@@ -1,11 +1,12 @@
-import { existsSync, mkdirSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { exec } from "../lib/exec.js";
+import { homedir } from "node:os";
 import {
   checkGhInstalled,
   checkGhAuth,
   fetchIssues,
   fetchPullRequests,
+  fetchOpenCount,
 } from "../lib/github.js";
 import { runSentinel } from "../lib/sentinel.js";
 import { classifyEffort, hasSecurityFlag } from "../lib/classifier.js";
@@ -17,6 +18,26 @@ interface ScanOptions {
   type: string;
   label?: string;
   json: boolean;
+}
+
+function findLocalRepoDir(owner: string, repo: string): string | null {
+  const candidates = [
+    join(process.cwd(), repo),
+    join(process.cwd(), `${owner}-${repo}`),
+    join(homedir(), repo),
+    join(homedir(), `${owner}-${repo}`),
+    join("/tmp", repo),
+    join("/tmp", `${owner}-${repo}`),
+    join("/tmp", "clawpr", `${owner}-${repo}`),
+  ];
+
+  for (const dir of candidates) {
+    if (existsSync(join(dir, ".git"))) {
+      return dir;
+    }
+  }
+
+  return null;
 }
 
 export function scanCommand(repoArg: string, options: ScanOptions): void {
@@ -37,7 +58,7 @@ export function scanCommand(repoArg: string, options: ScanOptions): void {
 
   if (options.type === "issue" || options.type === "all") {
     const issues = fetchIssues(owner, repo, limit, options.label);
-    totalOpen += issues.length;
+    totalOpen += fetchOpenCount(owner, repo, "issue");
     for (const issue of issues) {
       items.push({
         number: issue.number,
@@ -53,7 +74,7 @@ export function scanCommand(repoArg: string, options: ScanOptions): void {
 
   if (options.type === "pr" || options.type === "all") {
     const prs = fetchPullRequests(owner, repo, limit, options.label);
-    totalOpen += prs.length;
+    totalOpen += fetchOpenCount(owner, repo, "pr");
     for (const pr of prs) {
       items.push({
         number: pr.number,
@@ -70,8 +91,7 @@ export function scanCommand(repoArg: string, options: ScanOptions): void {
   items = items.slice(0, limit);
   const scanned = items.length;
 
-  // Run sentinel on a shallow clone
-  const tmpDir = join("/tmp", "clawpr", `${owner}-${repo}`);
+  // Run sentinel against a local clone if one exists
   let sentinel = {
     score: null as number | null,
     findings: [] as {
@@ -84,17 +104,14 @@ export function scanCommand(repoArg: string, options: ScanOptions): void {
     info: 0,
   };
 
-  try {
-    if (!existsSync(tmpDir)) {
-      mkdirSync(tmpDir, { recursive: true });
-      exec(
-        `git clone --depth 1 "https://github.com/${owner}/${repo}.git" "${tmpDir}"`,
-        { timeout: 30000, stdio: "pipe" }
-      );
-    }
-    sentinel = runSentinel(tmpDir);
-  } catch {
-    process.stderr.write("Warning: Could not clone repo for sentinel scan\n");
+  const localDir = findLocalRepoDir(owner, repo);
+  if (localDir) {
+    process.stderr.write(`Sentinel: scanning ${localDir}\n`);
+    sentinel = runSentinel(localDir);
+  } else {
+    process.stderr.write(
+      `Sentinel: no local clone found for ${owner}/${repo}, skipping security scan\n`
+    );
   }
 
   // Update security flags based on sentinel findings

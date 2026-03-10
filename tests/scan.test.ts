@@ -25,10 +25,13 @@ function setupMockExec(): void {
   setExecFn((cmd: string) => {
     if (cmd.includes("gh --version")) return "gh version 2.0.0";
     if (cmd.includes("gh auth status")) return "Logged in";
+    if (cmd.includes("search/issues") && cmd.includes("type%3Aissue"))
+      return "42";
+    if (cmd.includes("search/issues") && cmd.includes("type%3Apr"))
+      return "17";
     if (cmd.includes("/issues")) return issueJq;
     if (cmd.includes("/pulls")) return prJq;
     if (cmd.includes("clawstack-sentinel")) throw new Error("not found");
-    if (cmd.includes("git clone")) return "";
     return "";
   });
 }
@@ -57,7 +60,7 @@ describe("scan command", () => {
     assert.ok(output.includes("Items scanned:"));
   });
 
-  it("--json flag produces valid JSON", () => {
+  it("--json flag produces valid JSON with total_open from API", () => {
     setupMockExec();
     const logs: string[] = [];
     mock.method(console, "log", (msg: string) => logs.push(msg));
@@ -75,6 +78,7 @@ describe("scan command", () => {
     assert.equal(parsed.repo, "test/repo");
     assert.ok(Array.isArray(parsed.items));
     assert.ok(typeof parsed.sentinel === "object");
+    assert.equal(parsed.total_open, 59);
   });
 
   it("--limit restricts output count", () => {

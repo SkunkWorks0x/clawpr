@@ -54,6 +54,24 @@ function handleGhError(err: unknown, owner: string, repo: string, resource: stri
   process.exit(1);
 }
 
+export function fetchOpenCount(
+  owner: string,
+  repo: string,
+  type: "issue" | "pr"
+): number {
+  try {
+    const q = encodeURIComponent(
+      `repo:${owner}/${repo} type:${type} state:open`
+    );
+    const cmd = `gh api "search/issues?q=${q}&per_page=1" -q '.total_count'`;
+    const raw = exec(cmd, GH_EXEC_OPTS);
+    const count = parseInt(raw.trim(), 10);
+    return Number.isNaN(count) ? 0 : count;
+  } catch {
+    return 0;
+  }
+}
+
 export function fetchIssues(
   owner: string,
   repo: string,
