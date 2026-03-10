@@ -31,18 +31,21 @@ export interface ClassifiedItem {
   url: string;
 }
 
+export type SentinelSeverity = "critical" | "high" | "medium" | "low";
+
 export interface SentinelFinding {
   code: string;
   description: string;
-  severity: "critical" | "warning" | "info";
+  severity: SentinelSeverity;
 }
 
 export interface SentinelResult {
   score: number | null;
   findings: SentinelFinding[];
   critical: number;
-  warning: number;
-  info: number;
+  high: number;
+  medium: number;
+  low: number;
 }
 
 export interface ScanResult {

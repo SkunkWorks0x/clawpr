@@ -11,7 +11,7 @@ import {
 import { runSentinel } from "../lib/sentinel.js";
 import { classifyEffort, hasSecurityFlag } from "../lib/classifier.js";
 import { formatTable } from "../lib/formatter.js";
-import type { ClassifiedItem, ScanResult } from "../lib/types.js";
+import type { ClassifiedItem, ScanResult, SentinelResult } from "../lib/types.js";
 
 interface ScanOptions {
   limit: string;
@@ -92,16 +92,13 @@ export function scanCommand(repoArg: string, options: ScanOptions): void {
   const scanned = items.length;
 
   // Run sentinel against a local clone if one exists
-  let sentinel = {
-    score: null as number | null,
-    findings: [] as {
-      code: string;
-      description: string;
-      severity: "critical" | "warning" | "info";
-    }[],
+  let sentinel: SentinelResult = {
+    score: null,
+    findings: [],
     critical: 0,
-    warning: 0,
-    info: 0,
+    high: 0,
+    medium: 0,
+    low: 0,
   };
 
   const localDir = findLocalRepoDir(owner, repo);

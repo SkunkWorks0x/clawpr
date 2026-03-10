@@ -49,7 +49,7 @@ function buildSentinelBadge(sentinel: SentinelResult): string {
     return `\uD83D\uDEE1\uFE0F **Sentinel: \u2705 Clean (${sentinel.score}/100)**`;
   }
   const totalFindings =
-    sentinel.critical + sentinel.warning + sentinel.info;
+    sentinel.critical + sentinel.high + sentinel.medium + sentinel.low;
   return `\uD83D\uDEE1\uFE0F **Sentinel: \u26A0\uFE0F ${totalFindings} findings (${sentinel.score}/100)**`;
 }
 
@@ -126,8 +126,9 @@ export function prCommand(repoArg: string, options: PrOptions): void {
     score: null,
     findings: [],
     critical: 0,
-    warning: 0,
-    info: 0,
+    high: 0,
+    medium: 0,
+    low: 0,
   };
 
   if (detectSentinel()) {

@@ -47,7 +47,7 @@ export function formatTable(
   if (sentinel.score !== null) {
     const color = scoreColor(sentinel.score);
     lines.push(
-      `${color}Sentinel Score: ${sentinel.score}/100 (${sentinel.critical} critical, ${sentinel.warning} warning)${RESET}`
+      `${color}Sentinel Score: ${sentinel.score}/100 (${sentinel.critical} critical, ${sentinel.high} high, ${sentinel.medium} medium)${RESET}`
     );
   }
 

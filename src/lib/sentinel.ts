@@ -1,7 +1,16 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { exec } from "./exec.js";
-import type { SentinelFinding, SentinelResult } from "./types.js";
+import type { SentinelFinding, SentinelResult, SentinelSeverity } from "./types.js";
+
+const EMPTY_RESULT: SentinelResult = {
+  score: null,
+  findings: [],
+  critical: 0,
+  high: 0,
+  medium: 0,
+  low: 0,
+};
 
 export function detectSentinel(): boolean {
   try {
@@ -15,67 +24,107 @@ export function detectSentinel(): boolean {
   }
 }
 
-export function runSentinel(dir: string): SentinelResult {
-  const empty: SentinelResult = {
-    score: null,
-    findings: [],
-    critical: 0,
-    warning: 0,
-    info: 0,
-  };
+export function parseSentinelStdout(output: string): SentinelResult {
+  // Strip ANSI escape codes before parsing
+  const clean = output.replace(/\x1b\[[0-9;]*m/g, "");
 
+  // Parse: SECURITY SCORE: 0 / 100 [CRITICAL RISK]
+  const scoreMatch = clean.match(/SECURITY SCORE:\s*(\d+)\s*\/\s*100/);
+  const score = scoreMatch ? parseInt(scoreMatch[1]!, 10) : null;
+
+  // Parse: 1300 findings: 372 critical · 923 high · 5 medium · 0 low
+  let critical = 0;
+  let high = 0;
+  let medium = 0;
+  let low = 0;
+
+  const countsMatch = clean.match(
+    /(\d+)\s+findings?:\s*(\d+)\s+critical\s*·\s*(\d+)\s+high\s*·\s*(\d+)\s+medium\s*·\s*(\d+)\s+low/
+  );
+  if (countsMatch) {
+    critical = parseInt(countsMatch[2]!, 10);
+    high = parseInt(countsMatch[3]!, 10);
+    medium = parseInt(countsMatch[4]!, 10);
+    low = parseInt(countsMatch[5]!, 10);
+  }
+
+  return { score, findings: [], critical, high, medium, low };
+}
+
+export function runSentinel(dir: string): SentinelResult {
   if (!detectSentinel()) {
     process.stderr.write(
       "Warning: Sentinel not found, skipping security scan\n"
     );
-    return empty;
+    return { ...EMPTY_RESULT };
   }
 
+  let stdout = "";
   try {
-    exec(`npx clawstack-sentinel --path "${dir}"`, {
-      timeout: 60000,
+    stdout = exec(`npx clawstack-sentinel --path "${dir}"`, {
+      timeout: 120000,
       stdio: "pipe",
     });
-  } catch {
-    process.stderr.write(
-      "Warning: Sentinel execution failed, skipping security scan\n"
-    );
-    return empty;
+  } catch (err: unknown) {
+    // Sentinel may exit non-zero on critical findings but still print results
+    if (err && typeof err === "object" && "stdout" in err) {
+      stdout = String((err as { stdout: unknown }).stdout);
+    }
+    if (!stdout) {
+      process.stderr.write(
+        "Warning: Sentinel execution failed, skipping security scan\n"
+      );
+      return { ...EMPTY_RESULT };
+    }
   }
 
+  // Primary: parse stdout directly
+  const result = parseSentinelStdout(stdout);
+  if (result.score !== null) {
+    return result;
+  }
+
+  // Fallback: try reading report from CWD (where Sentinel writes it)
+  const cwdReport = join(process.cwd(), "sentinel-report.md");
+  const fallback = parseSentinelReport(cwdReport);
+  if (fallback.score !== null) {
+    return fallback;
+  }
+
+  // Last resort: try scanned dir
   return parseSentinelReport(join(dir, "sentinel-report.md"));
 }
 
 export function parseSentinelReport(reportPath: string): SentinelResult {
-  const empty: SentinelResult = {
-    score: null,
-    findings: [],
-    critical: 0,
-    warning: 0,
-    info: 0,
-  };
-
   let content: string;
   try {
     content = readFileSync(reportPath, "utf-8");
   } catch {
-    return empty;
+    return { ...EMPTY_RESULT };
   }
 
-  const scoreMatch = content.match(/Score:\s*(\d+)\/100/);
+  // Match both formats:
+  // "**Score: 72/100**"  (old fixture format)
+  // "## Security Score: 0 / 100 — CRITICAL RISK"  (real Sentinel)
+  const scoreMatch = content.match(/Score:\s*(\d+)\s*\/\s*100/);
   const score = scoreMatch ? parseInt(scoreMatch[1]!, 10) : null;
 
   const findings: SentinelFinding[] = [];
-  let currentSeverity: "critical" | "warning" | "info" | null = null;
+  let currentSeverity: SentinelSeverity | null = null;
 
   for (const line of content.split("\n")) {
     const headingMatch = line.match(/^###\s+(\w+)/);
     if (headingMatch) {
       const h = headingMatch[1]!.toLowerCase();
-      if (h === "critical") currentSeverity = "critical";
-      else if (h === "warning") currentSeverity = "warning";
-      else if (h === "info") currentSeverity = "info";
-      else currentSeverity = null;
+      if (h === "critical" || h === "high" || h === "medium" || h === "low") {
+        currentSeverity = h;
+      } else if (h === "warning") {
+        currentSeverity = "high";
+      } else if (h === "info") {
+        currentSeverity = "low";
+      } else {
+        currentSeverity = null;
+      }
       continue;
     }
 
@@ -95,7 +144,8 @@ export function parseSentinelReport(reportPath: string): SentinelResult {
     score,
     findings,
     critical: findings.filter((f) => f.severity === "critical").length,
-    warning: findings.filter((f) => f.severity === "warning").length,
-    info: findings.filter((f) => f.severity === "info").length,
+    high: findings.filter((f) => f.severity === "high").length,
+    medium: findings.filter((f) => f.severity === "medium").length,
+    low: findings.filter((f) => f.severity === "low").length,
   };
 }
